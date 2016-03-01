@@ -11,6 +11,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -25,13 +26,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
-public class TipCalculatorActivity extends Activity 
-implements OnEditorActionListener, OnSeekBarChangeListener, 
+public class TipCalculatorActivity extends Activity
+implements OnEditorActionListener, OnSeekBarChangeListener,
 OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
 
     // define variables for the widgets
+    private TipDB tipDB;
     private EditText billAmountEditText;
-    private TextView percentTextView;   
+    private TextView percentTextView;
     private SeekBar percentSeekBar;
     private TextView tipTextView;
     private TextView totalTextView;
@@ -42,43 +44,45 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
     private Spinner splitSpinner;
     private TextView perPersonLabel;
     private TextView perPersonTextView;
-    
+    private Button saveBTN;
+
     // define the SharedPreferences object
     private SharedPreferences savedValues;
-    
+
     // define rounding constants
     private final int ROUND_NONE = 0;
     private final int ROUND_TIP = 1;
     private final int ROUND_TOTAL = 2;
-    
+
     // define instance variables
     private String billAmountString = "";
     private float tipPercent = .15f;
     private int rounding = ROUND_NONE;
     private int split = 1;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tip_calculator);
-        
+
         // get references to the widgets
         billAmountEditText = (EditText) findViewById(R.id.billAmountEditText);
         percentTextView = (TextView) findViewById(R.id.percentTextView);
         percentSeekBar = (SeekBar) findViewById(R.id.percentSeekBar);
         tipTextView = (TextView) findViewById(R.id.tipTextView);
         totalTextView = (TextView) findViewById(R.id.totalTextView);
-        roundingRadioGroup = (RadioGroup) 
+        roundingRadioGroup = (RadioGroup)
                 findViewById(R.id.roundingRadioGroup);
-        roundNoneRadioButton = (RadioButton) 
+        roundNoneRadioButton = (RadioButton)
                 findViewById(R.id.roundNoneRadioButton);
-        roundTipRadioButton = (RadioButton) 
+        roundTipRadioButton = (RadioButton)
                 findViewById(R.id.roundTipRadioButton);
-        roundTotalRadioButton = (RadioButton) 
+        roundTotalRadioButton = (RadioButton)
                 findViewById(R.id.roundTotalRadioButton);
         splitSpinner = (Spinner) findViewById(R.id.splitSpinner);
         perPersonLabel = (TextView) findViewById(R.id.perPersonLabel);
         perPersonTextView = (TextView) findViewById(R.id.perPersonTextView);
+        saveBTN = (Button) findViewById(R.id.saveBTN);
 
         // set array adapter for spinner
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
@@ -95,28 +99,29 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
         roundingRadioGroup.setOnCheckedChangeListener(this);
         roundingRadioGroup.setOnKeyListener(this);
         splitSpinner.setOnItemSelectedListener(this);
-        
+        saveBTN.setOnClickListener(tipDB.insertTip());
+
         // get SharedPreferences object
         savedValues = getSharedPreferences("SavedValues", MODE_PRIVATE);
     }
-    
+
     @Override
     public void onPause() {
-        // save the instance variables       
-        Editor editor = savedValues.edit();        
+        // save the instance variables
+        Editor editor = savedValues.edit();
         editor.putString("billAmountString", billAmountString);
         editor.putFloat("tipPercent", tipPercent);
         editor.putInt("rounding", rounding);
         editor.putInt("split", split);
-        editor.commit();        
+        editor.commit();
 
-        super.onPause();      
+        super.onPause();
     }
-    
+
     @Override
     public void onResume() {
         super.onResume();
-        
+
         // get the instance variables
         billAmountString = savedValues.getString("billAmountString", "");
         tipPercent = savedValues.getFloat("tipPercent", 0.15f);
@@ -125,13 +130,13 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
 
         // set the bill amount on its widget
         billAmountEditText.setText(billAmountString);
-        
+
         // set the tip percent on its widget
         int progress = Math.round(tipPercent * 100);
         percentSeekBar.setProgress(progress);
-        
+
         // set rounding on radio buttons
-        // NOTE: this executes the onCheckedChanged method, 
+        // NOTE: this executes the onCheckedChanged method,
         // which executes the calculateAndDisplay method
         if (rounding == ROUND_NONE) {
             roundNoneRadioButton.setChecked(true);
@@ -142,32 +147,32 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
         else if (rounding == ROUND_TIP) {
             roundTotalRadioButton.setChecked(true);
         }
-        
+
         // set split on spinner
-        // NOTE: this executes the onItemSelected method, 
-        // which executes the calculateAndDisplay method 
+        // NOTE: this executes the onItemSelected method,
+        // which executes the calculateAndDisplay method
         int position = split - 1;
         splitSpinner.setSelection(position);
     }
-    
+
     public void calculateAndDisplay() {
         // get the bill amount
         billAmountString = billAmountEditText.getText().toString();
-        float billAmount; 
+        float billAmount;
         if (billAmountString.equals("")) {
             billAmount = 0;
         }
         else {
             billAmount = Float.parseFloat(billAmountString);
         }
-        
+
         // get tip percent
         int progress = percentSeekBar.getProgress();
         tipPercent = (float) progress / 100;
-        
+
         // calculate tip and total
         float tipAmount = 0;
-        float totalAmount = 0;        
+        float totalAmount = 0;
         if (rounding == ROUND_NONE) {
             tipAmount = billAmount * tipPercent;
             totalAmount = billAmount + tipAmount;
@@ -183,7 +188,7 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
             tipAmount = totalAmount - billAmount;
             tipPercent = tipAmount / billAmount;
         }
-        
+
         // calculate split amount and show/hide split amount widgets
         float splitAmount = 0;
         if (split == 1) {  // no split - hide widgets
@@ -195,17 +200,17 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
             perPersonLabel.setVisibility(View.VISIBLE);
             perPersonTextView.setVisibility(View.VISIBLE);
         }
-        
+
         // display the results with formatting
         NumberFormat currency = NumberFormat.getCurrencyInstance();
         tipTextView.setText(currency.format(tipAmount));
         totalTextView.setText(currency.format(totalAmount));
         perPersonTextView.setText(currency.format(splitAmount));
-        
+
         NumberFormat percent = NumberFormat.getPercentInstance();
         percentTextView.setText(percent.format(tipPercent));
     }
-    
+
     //*****************************************************
     // Event handler for the EditText
     //*****************************************************
@@ -214,16 +219,16 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
         if (actionId == EditorInfo.IME_ACTION_DONE ||
             actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
             calculateAndDisplay();
-        }        
+        }
         return false;
     }
-    
+
     //*****************************************************
     // Event handler for the SeekBar
     //*****************************************************
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        // TODO Auto-generated method stub        
+        // TODO Auto-generated method stub
     }
 
     @Override
@@ -236,7 +241,7 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
     public void onStopTrackingTouch(SeekBar seekBar) {
         calculateAndDisplay();
     }
-    
+
     //*****************************************************
     // Event handler for the RadioGroup
     //*****************************************************
@@ -245,13 +250,13 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
         switch (checkedId) {
             case R.id.roundNoneRadioButton:
                 rounding = ROUND_NONE;
-                break;                        
+                break;
             case R.id.roundTipRadioButton:
                 rounding = ROUND_TIP;
-                break;                        
+                break;
             case R.id.roundTotalRadioButton:
                 rounding = ROUND_TOTAL;
-                break;                        
+                break;
         }
         calculateAndDisplay();
     }
@@ -270,7 +275,7 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
     public void onNothingSelected(AdapterView<?> parent) {
         // Do nothing
     }
-    
+
     //*****************************************************
     // Event handler for the keyboard and DPad
     //*****************************************************
@@ -279,15 +284,15 @@ OnCheckedChangeListener, OnItemSelectedListener, OnKeyListener {
         switch (keyCode) {
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_DPAD_CENTER:
-                
+
                 calculateAndDisplay();
-                
+
                 // hide the soft keyboard
-                InputMethodManager imm = (InputMethodManager) 
+                InputMethodManager imm = (InputMethodManager)
                         getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(
                         billAmountEditText.getWindowToken(), 0);
-                
+
                 // consume the event
                 return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT:

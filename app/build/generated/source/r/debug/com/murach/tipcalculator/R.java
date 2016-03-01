@@ -21,7 +21,6 @@ public final class R {
     public static final class id {
         public static final int billAmountEditText=0x7f080001;
         public static final int billAmountLabel=0x7f080000;
-        public static final int btnSave=0x7f080013;
         public static final int menu_settings=0x7f080014;
         public static final int perPersonLabel=0x7f080012;
         public static final int perPersonTextView=0x7f080011;
@@ -33,6 +32,7 @@ public final class R {
         public static final int roundTotalRadioButton=0x7f08000e;
         public static final int roundingLabel=0x7f08000a;
         public static final int roundingRadioGroup=0x7f08000b;
+        public static final int saveBTN=0x7f080013;
         public static final int separatorLine=0x7f080009;
         public static final int splitLabel=0x7f08000f;
         public static final int splitSpinner=0x7f080010;

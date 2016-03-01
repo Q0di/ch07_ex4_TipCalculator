@@ -1,10 +1,11 @@
 package com.murach.tipcalculator;
 
 /**
- * Created by 660161986 on 2/27/2016.
+ * Created by 660161986 on 2/29/2016.
  */
 import android.annotation.SuppressLint;
 
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
